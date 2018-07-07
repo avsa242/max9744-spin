@@ -1,8 +1,9 @@
 {
     --------------------------------------------
-    Filename:
-    Author:
-    Copyright (c) 20__
+    Filename: signal.audio.amp.max9744.i2c.spin
+    Author: Jesse Burt
+    Description: Driver for the MAX9744 20W audio amplifier IC
+    Copyright (c) 2018
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -31,18 +32,18 @@ OBJ
 PUB null
 ''This is not a top-level object
 
-PUB Start(SHDN): okay                                         'Default to "standard" Propeller I2C pins
-
+PUB Start(SHDN): okay                                   'Default to "standard" Propeller I2C pins
+' Must provide SHDN (shutdown) pin
   okay := Startx (SCL, SDA, HZ, SHDN)
 
 PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ, SHDN)
-
+' Must provide SHDN (shutdown) pin
   if lookdown(SCL_PIN: 0..31)                           'Validate pins
     if lookdown(SDA_PIN: 0..31)
       if SCL_PIN <> SDA_PIN
         if I2C_HZ =< I2C_MAX_BUS_FREQ
           _shdn := SHDN
-          Powered (TRUE)
+          Powered (TRUE)                                'Bring SHDN pin high, if it isn't already
           return i2c.setupx (SCL_PIN, SDA_PIN, I2C_HZ)
         else
           return FALSE
@@ -56,30 +57,19 @@ PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ, SHDN)
 PUB Vol(level) | ack
 ' Set Volume to a specific level
   level := 0 #> level <# 63
-{  i2c.start
-  i2c.write (SLAVE_ADDR_W)
-  i2c.write (level)
-  i2c.stop}
   cmd(level)
 
 PUB VolUp
 ' Increase volume level
-{  i2c.start
-  i2c.write (SLAVE_ADDR_W)
-  i2c.write (max9744#CMD_VOL_UP)
-  i2c.stop}
   cmd(max9744#CMD_VOL_UP)
 
 PUB VolDown
 ' Decrease volume level
-{  i2c.start
-  i2c.write (SLAVE_ADDR_W)
-  i2c.write (max9744#CMD_VOL_DN)
-  i2c.stop}
   cmd(max9744#CMD_VOL_DN)
 
 PUB ModulationMode(mode)
-' Set output filter mode XXX NOT VERIFIED
+' Set output filter mode
+' NOTE: Verified difference in output on scope, but inaudible (to me)
   case mode
     0:
       mode := max9744#MODULATION_FILTERLESS  'Filterless modulation
@@ -87,21 +77,18 @@ PUB ModulationMode(mode)
       mode := max9744#MODULATION_CLASSICPWM  'Classic PWM
     OTHER:
       return
-' SHUTDOWN
-' POWER ON
-' SEND CMD before 220ms has elapsed
 
   Powered (FALSE)
   Powered (TRUE)
   
-{  i2c.start
-  i2c.write (SLAVE_ADDR_W)
-  i2c.write (mode)
-  i2c.stop}
   cmd(mode)
 
-PUB Powered(bool__powered)
+PUB Mute
+' Set 0 Volume
+  Vol (0)
 
+PUB Powered(bool__powered)
+' Power on or off
   case bool__powered
     FALSE:
       io.Low (_shdn)

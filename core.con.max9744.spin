@@ -1,8 +1,8 @@
 {
     --------------------------------------------
-    Filename:
-    Author:
-    Copyright (c) 2015
+    Filename: core.con.max9744.spin
+    Author: Jesse Burt
+    Copyright (c) 2018
     See end of file for terms of use.
     --------------------------------------------
 }

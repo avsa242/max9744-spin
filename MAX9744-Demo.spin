@@ -1,16 +1,21 @@
 {
     --------------------------------------------
-    Filename:
-    Author:
-    Copyright (c) 20__
+    Filename: MAX9744-Demo.spin
+    Author: Jesse Burt
+    Copyright (c) 2018
     See end of file for terms of use.
     --------------------------------------------
 }
 
 CON
 
-  _clkmode = cfg#_clkmode
-  _xinfreq = cfg#_xinfreq
+  _clkmode  = cfg#_clkmode
+  _xinfreq  = cfg#_xinfreq
+
+  I2C_SCL   = 10
+  I2C_SDA   = 11
+  I2C_HZ    = 400_000
+  SHDN_PIN  = 8
 
 OBJ
 
@@ -18,9 +23,6 @@ OBJ
   ser   : "com.serial.terminal"
   time  : "time"
   amp   : "signal.audio.amp.max9744.i2c"
-
-VAR
-
 
 PUB Main | cmd, i, level
 
@@ -31,7 +33,6 @@ PUB Main | cmd, i, level
   repeat
     ser.Str (string("Volume: "))
     ser.Dec (level)
-'    amp.Vol (level)
     ser.NewLine
     ser.Str (string("Press [ or ] for Volume Down or Up, respectively", ser#NL))
     i := ser.CharIn
@@ -53,7 +54,7 @@ PUB Main | cmd, i, level
 PUB Setup
 
   repeat until ser.Start (115_200)
-  amp.Startx (10, 11, 100_000, 8)
+  amp.Startx (I2C_SCL, I2C_SDA, I2C_HZ, SHDN_PIN)
 
 DAT
 {
