@@ -31,6 +31,7 @@ PUB Main | cmd, i, level
   ser.Clear
 
   repeat
+    ser.Position (0, 0)
     ser.Str (string("Volume: "))
     ser.Dec (level)
     ser.NewLine
