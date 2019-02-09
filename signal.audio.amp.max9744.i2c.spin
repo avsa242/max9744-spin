@@ -3,104 +3,123 @@
     Filename: signal.audio.amp.max9744.i2c.spin
     Author: Jesse Burt
     Description: Driver for the MAX9744 20W audio amplifier IC
-    Copyright (c) 2018
+    Copyright (c) 2019
+    Started Jul 7, 2018
+    Updated Feb 9, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
 
 CON
 
-  SLAVE_ADDR        = $4B << 1  'Replace with 7bit address, or 8bit and remove the left shift
-  SLAVE_ADDR_W      = SLAVE_ADDR
-  SLAVE_ADDR_R      = SLAVE_ADDR|1
-  
-  SCL               = 28
-  SDA               = 29
-  HZ                = 400_000
-  I2C_MAX_BUS_FREQ  = 400_000
+    SLAVE_WR          = core#SLAVE_ADDR
+    SLAVE_RD          = core#SLAVE_ADDR|1
+
+    DEF_SCL           = 28
+    DEF_SDA           = 29
+    DEF_HZ            = 400_000
+    I2C_MAX_FREQ      = core#I2C_MAX_FREQ
 
 VAR
 
-  long  _shdn
+    long  _shdn
 
 OBJ
 
-  i2c     : "jm_i2c_fast"
-  max9744 : "core.con.max9744"
-  io      : "io"
+    i2c     : "jm_i2c_fast"
+    core    : "core.con.max9744"
+    io      : "io"
+    time    : "time"
 
-PUB null
-''This is not a top-level object
+PUB Null
+' This is not a top-level object
 
-PUB Start(SHDN): okay                                   'Default to "standard" Propeller I2C pins
-' Must provide SHDN (shutdown) pin
-  okay := Startx (SCL, SDA, HZ, SHDN)
-
-PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ, SHDN)
-' Must provide SHDN (shutdown) pin
-  if lookdown(SCL_PIN: 0..31)                           'Validate pins
-    if lookdown(SDA_PIN: 0..31)
-      if SCL_PIN <> SDA_PIN
-        if I2C_HZ =< I2C_MAX_BUS_FREQ
-          _shdn := SHDN
-          Powered (TRUE)                                'Bring SHDN pin high, if it isn't already
-          return i2c.setupx (SCL_PIN, SDA_PIN, I2C_HZ)
-        else
-          return FALSE
-      else
-        return FALSE
+PUB Start(SHDN_PIN): okay                                       'Default to "standard" Propeller I2C pins and 400kHz
+' Simple start method uses default pin and bus freq settings, but still requires
+'  SHDN_PIN to be defined
+    if lookdown(SHDN_PIN: 0..31)
+        okay := Startx (DEF_SCL, DEF_SDA, DEF_HZ, SHDN_PIN)
     else
-      return FALSE
-  else
-    return FALSE
+        return FALSE
 
-PUB Vol(level) | ack
-' Set Volume to a specific level
-  level := 0 #> level <# 63
-  cmd(level)
+PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ, SHDN_PIN): okay
+' Start with custom settings
+'   Returns: Core/cog number+1 of I2C driver, FALSE if no cogs available
+    if lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31)
+        if I2C_HZ =< core#I2C_MAX_FREQ
+            if okay := i2c.setupx (SCL_PIN, SDA_PIN, I2C_HZ)    'I2C Object Started?
+                time.MSleep (1)
+                if i2c.present (SLAVE_WR)                       'Response from device?
+                    _shdn := SHDN_PIN
+                    Power(TRUE)                                 'Bring SHDN pin high, if it isn't already
+                    return okay
 
-PUB VolUp
-' Increase volume level
-  cmd(max9744#CMD_VOL_UP)
-
-PUB VolDown
-' Decrease volume level
-  cmd(max9744#CMD_VOL_DN)
+    return FALSE                                                'If we got here, something went wrong
 
 PUB ModulationMode(mode)
 ' Set output filter mode
-' NOTE: Verified difference in output on scope, but inaudible (to me)
-  case mode
-    0:
-      mode := max9744#MODULATION_FILTERLESS  'Filterless modulation
-    1:
-      mode := max9744#MODULATION_CLASSICPWM  'Classic PWM
-    OTHER:
-      return
+'   Valid values: 0: Filterless, 1: Classic PWM
+'   All other values are ignored, and return FALSE
+    case mode
+        0:
+            mode := core#MODULATION_FILTERLESS  'Filterless modulation
+        1:
+            mode := core#MODULATION_CLASSICPWM  'Classic PWM
+        OTHER:
+            return
 
-  Powered (FALSE)
-  Powered (TRUE)
+    Power (FALSE)
+    Power (TRUE)
   
-  cmd(mode)
+    writeReg(mode)
 
 PUB Mute
 ' Set 0 Volume
-  Vol (0)
+    Vol (0)
 
-PUB Powered(bool__powered)
+PUB Power(enabled)
 ' Power on or off
-  case bool__powered
-    FALSE:
-      io.Low (_shdn)
-    OTHER:
-      io.High (_shdn)
+'   Valid values: FALSE, 0: Power off   TRUE, 1: Power on
+'   All other values are ignored, and return FALSE
+    case ||enabled
+        0:
+            io.Low (_shdn)
+        1:
+            io.High (_shdn)
+        OTHER:
+            return
 
-PRI cmd(cmd_byte)
+PUB Vol(level) | ack
+' Set Volume to a specific level
+'   Valid values: 0..63
+'   All other values are ignored, and return FALSE
 
-  i2c.start
-  i2c.write (SLAVE_ADDR_W)
-  i2c.write (cmd_byte)
-  i2c.stop
+    case level
+        0..63:
+        OTHER:
+            return FALSE
+    writeReg(level)
+
+PUB VolDown
+' Decrease volume level
+    writeReg(core#CMD_VOL_DN)
+
+PUB VolUp
+' Increase volume level
+    writeReg(core#CMD_VOL_UP)
+
+PRI writeReg(reg) | cmd_packet[2]
+' Write nr_bytes to register 'reg' stored in val
+' If nr_bytes is
+'   0, It's a command that has no arguments - write the command only
+'   1, It's a command with a single byte argument - write the command, then the byte
+'   2, It's a command with two arguments - write the command, then the two bytes (encoded as a word)
+    cmd_packet.byte[0] := SLAVE_WR
+    cmd_packet.byte[1] := reg 'Simple command
+
+    i2c.start
+    i2c.pwrite (@cmd_packet, 2)
+    i2c.stop
 
 DAT
 {

@@ -2,60 +2,64 @@
     --------------------------------------------
     Filename: MAX9744-Demo.spin
     Author: Jesse Burt
-    Copyright (c) 2018
+    Description: Simple serial terminal-based demo of the MAX9744
+        audio amp driver.
+    Copyright (c) 2019
+    Started Jul 7, 2018
+    Updated Feb 9, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
 
 CON
 
-  _clkmode  = cfg#_clkmode
-  _xinfreq  = cfg#_xinfreq
+    _clkmode  = cfg#_clkmode
+    _xinfreq  = cfg#_xinfreq
 
-  I2C_SCL   = 10
-  I2C_SDA   = 11
-  I2C_HZ    = 400_000
-  SHDN_PIN  = 8
+    I2C_SCL   = 10
+    I2C_SDA   = 11
+    I2C_HZ    = 400_000
+    SHDN_PIN  = 8
 
 OBJ
 
-  cfg   : "core.con.client.propboe"
-  ser   : "com.serial.terminal"
-  time  : "time"
-  amp   : "signal.audio.amp.max9744.i2c"
+    cfg   : "core.con.boardcfg.activityboard"
+    ser   : "com.serial.terminal"
+    time  : "time"
+    amp   : "signal.audio.amp.max9744.i2c"
 
 PUB Main | cmd, i, level
 
-  Setup
-  level := 31
-  ser.Clear
+    Setup
+    level := 31
+    ser.Clear
 
-  repeat
-    ser.Position (0, 0)
-    ser.Str (string("Volume: "))
-    ser.Dec (level)
-    ser.NewLine
-    ser.Str (string("Press [ or ] for Volume Down or Up, respectively", ser#NL))
-    i := ser.CharIn
-    case i
-      "[":
-        level := 0 #> (level - 1)
-        amp.VolDown
-      "]":
-        level := (level + 1) <# 63
-        amp.VolUp
-      "f":
-        ser.Str (string("Modulation mode: Filterless", ser#NL))
-        amp.ModulationMode (0)
-      "p":
-        ser.Str (string("Modulation mode: Classic PWM", ser#NL))
-        amp.ModulationMode (1)
-      OTHER:
+    repeat
+        ser.Position (0, 0)
+        ser.Str (string("Volume: "))
+        ser.Dec (level)
+        ser.NewLine
+        ser.Str (string("Press [ or ] for Volume Down or Up, respectively", ser#NL))
+        i := ser.CharIn
+            case i
+                "[":
+                    level := 0 #> (level - 1)
+                    amp.VolDown
+                "]":
+                    level := (level + 1) <# 63
+                    amp.VolUp
+                "f":
+                    ser.Str (string("Modulation mode: Filterless ", ser#NL))
+                    amp.ModulationMode (0)
+                "p":
+                    ser.Str (string("Modulation mode: Classic PWM", ser#NL))
+                    amp.ModulationMode (1)
+                OTHER:
 
 PUB Setup
 
-  repeat until ser.Start (115_200)
-  amp.Startx (I2C_SCL, I2C_SDA, I2C_HZ, SHDN_PIN)
+    repeat until ser.Start (115_200)
+    amp.Startx (I2C_SCL, I2C_SDA, I2C_HZ, SHDN_PIN)
 
 DAT
 {
