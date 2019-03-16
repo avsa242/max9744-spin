@@ -6,7 +6,7 @@
         audio amp driver.
     Copyright (c) 2019
     Started Jul 7, 2018
-    Updated Feb 9, 2019
+    Updated Mar 16, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -16,19 +16,19 @@ CON
     _clkmode  = cfg#_clkmode
     _xinfreq  = cfg#_xinfreq
 
-    I2C_SCL   = 10
-    I2C_SDA   = 11
+    I2C_SCL   = 28
+    I2C_SDA   = 29
     I2C_HZ    = 400_000
-    SHDN_PIN  = 8
+    SHDN_PIN  = 25
 
 OBJ
 
-    cfg   : "core.con.boardcfg.activityboard"
+    cfg   : "core.con.boardcfg.flip"
     ser   : "com.serial.terminal"
     time  : "time"
     amp   : "signal.audio.amp.max9744.i2c"
 
-PUB Main | cmd, i, level
+PUB Main | i, level
 
     Setup
     level := 31
@@ -59,7 +59,16 @@ PUB Main | cmd, i, level
 PUB Setup
 
     repeat until ser.Start (115_200)
-    amp.Startx (I2C_SCL, I2C_SDA, I2C_HZ, SHDN_PIN)
+    ser.Clear
+    ser.Str (string("Serial terminal started", ser#NL))
+    if amp.Startx (I2C_SCL, I2C_SDA, I2C_HZ, SHDN_PIN)
+        ser.Str (string("MAX9744 driver started", ser#NL))
+    else
+        ser.Str (string("MAX9744 driver failed to start - halting", ser#NL))
+        amp.Stop
+        time.MSleep (500)
+        ser.Stop
+        repeat
 
 DAT
 {

@@ -5,7 +5,7 @@
     Description: Driver for the MAX9744 20W audio amplifier IC
     Copyright (c) 2019
     Started Jul 7, 2018
-    Updated Feb 9, 2019
+    Updated Mar 16, 2019
     See end of file for terms of use.
     --------------------------------------------
 }
@@ -26,7 +26,7 @@ VAR
 
 OBJ
 
-    i2c     : "jm_i2c_fast"
+    i2c     : "com.i2c"
     core    : "core.con.max9744"
     io      : "io"
     time    : "time"
@@ -56,6 +56,10 @@ PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ, SHDN_PIN): okay
 
     return FALSE                                                'If we got here, something went wrong
 
+PUB Stop
+
+    i2c.terminate
+
 PUB ModulationMode(mode)
 ' Set output filter mode
 '   Valid values: 0: Filterless, 1: Classic PWM
@@ -71,7 +75,7 @@ PUB ModulationMode(mode)
     Power (FALSE)
     Power (TRUE)
   
-    writeReg(mode)
+    writeRegX(mode)
 
 PUB Mute
 ' Set 0 Volume
@@ -87,9 +91,9 @@ PUB Power(enabled)
         1:
             io.High (_shdn)
         OTHER:
-            return
+            return FALSE
 
-PUB Vol(level) | ack
+PUB Vol(level)
 ' Set Volume to a specific level
 '   Valid values: 0..63
 '   All other values are ignored, and return FALSE
@@ -98,27 +102,23 @@ PUB Vol(level) | ack
         0..63:
         OTHER:
             return FALSE
-    writeReg(level)
+    writeRegX(level)
 
 PUB VolDown
 ' Decrease volume level
-    writeReg(core#CMD_VOL_DN)
+    writeRegX(core#CMD_VOL_DN)
 
 PUB VolUp
 ' Increase volume level
-    writeReg(core#CMD_VOL_UP)
+    writeRegX(core#CMD_VOL_UP)
 
-PRI writeReg(reg) | cmd_packet[2]
-' Write nr_bytes to register 'reg' stored in val
-' If nr_bytes is
-'   0, It's a command that has no arguments - write the command only
-'   1, It's a command with a single byte argument - write the command, then the byte
-'   2, It's a command with two arguments - write the command, then the two bytes (encoded as a word)
+PRI writeRegX(reg) | cmd_packet
+
     cmd_packet.byte[0] := SLAVE_WR
-    cmd_packet.byte[1] := reg 'Simple command
+    cmd_packet.byte[1] := reg
 
     i2c.start
-    i2c.pwrite (@cmd_packet, 2)
+    i2c.wr_block (@cmd_packet, 2)
     i2c.stop
 
 DAT
