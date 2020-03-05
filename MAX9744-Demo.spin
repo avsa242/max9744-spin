@@ -19,14 +19,15 @@ CON
     I2C_SCL   = 28
     I2C_SDA   = 29
     I2C_HZ    = 400_000
-    SHDN_PIN  = 25
+    SHDN_PIN  = 18
 
 OBJ
 
-    cfg   : "core.con.boardcfg.flip"
-    ser   : "com.serial.terminal"
-    time  : "time"
-    amp   : "signal.audio.amp.max9744.i2c"
+    cfg     : "core.con.boardcfg.flip"
+    ser     : "com.serial.terminal.ansi"
+    io      : "io"
+    time    : "time"
+    amp     : "signal.audio.amp.max9744.i2c"
 
 PUB Main | i, level
 
@@ -39,7 +40,7 @@ PUB Main | i, level
         ser.Str (string("Volume: "))
         ser.Dec (level)
         ser.NewLine
-        ser.Str (string("Press [ or ] for Volume Down or Up, respectively", ser#NL))
+        ser.Str (string("Press [ or ] for Volume Down or Up, respectively", ser#CR, ser#LF))
         i := ser.CharIn
             case i
                 "[":
@@ -49,26 +50,29 @@ PUB Main | i, level
                     level := (level + 1) <# 63
                     amp.VolUp
                 "f":
-                    ser.Str (string("Modulation mode: Filterless ", ser#NL))
+                    ser.Str (string("Modulation mode: Filterless ", ser#CR, ser#LF))
                     amp.ModulationMode (0)
                 "p":
-                    ser.Str (string("Modulation mode: Classic PWM", ser#NL))
+                    ser.Str (string("Modulation mode: Classic PWM", ser#CR, ser#LF))
                     amp.ModulationMode (1)
                 OTHER:
 
 PUB Setup
 
-    repeat until ser.Start (115_200)
+    repeat until ser.StartRXTX (SER_RX, SER_TX, 0, SER_BAUD)
+    time.MSleep(30)
     ser.Clear
-    ser.Str (string("Serial terminal started", ser#NL))
+    ser.Str (string("Serial terminal started", ser#CR, ser#LF))
     if amp.Startx (I2C_SCL, I2C_SDA, I2C_HZ, SHDN_PIN)
-        ser.Str (string("MAX9744 driver started", ser#NL))
+        ser.Str (string("MAX9744 driver started", ser#CR, ser#LF))
     else
-        ser.Str (string("MAX9744 driver failed to start - halting", ser#NL))
+        ser.Str (string("MAX9744 driver failed to start - halting", ser#CR, ser#LF))
         amp.Stop
         time.MSleep (500)
         ser.Stop
-        repeat
+        FlashLED(LED, 500)
+
+#include "lib.utility.spin"
 
 DAT
 {

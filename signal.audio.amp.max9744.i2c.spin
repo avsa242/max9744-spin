@@ -75,7 +75,7 @@ PUB ModulationMode(mode)
     Power (FALSE)
     Power (TRUE)
   
-    writeRegX(mode)
+    writeReg(mode)
 
 PUB Mute
 ' Set 0 Volume
@@ -102,17 +102,17 @@ PUB Vol(level)
         0..63:
         OTHER:
             return FALSE
-    writeRegX(level)
+    writeReg(level)
 
 PUB VolDown
 ' Decrease volume level
-    writeRegX(core#CMD_VOL_DN)
+    writeReg(core#CMD_VOL_DN)
 
 PUB VolUp
 ' Increase volume level
-    writeRegX(core#CMD_VOL_UP)
+    writeReg(core#CMD_VOL_UP)
 
-PRI writeRegX(reg) | cmd_packet
+PRI writeReg(reg) | cmd_packet
 
     cmd_packet.byte[0] := SLAVE_WR
     cmd_packet.byte[1] := reg
