@@ -4,22 +4,27 @@
     Author: Jesse Burt
     Description: Simple serial terminal-based demo of the MAX9744
         audio amp driver.
-    Copyright (c) 2019
+    Copyright (c) 2020
     Started Jul 7, 2018
-    Updated Mar 16, 2019
+    Updated Mar 5, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
 
 CON
 
-    _clkmode  = cfg#_clkmode
-    _xinfreq  = cfg#_xinfreq
+    _clkmode    = cfg#_clkmode
+    _xinfreq    = cfg#_xinfreq
 
-    I2C_SCL   = 28
-    I2C_SDA   = 29
-    I2C_HZ    = 400_000
-    SHDN_PIN  = 18
+    LED         = cfg#LED1
+    SER_RX      = 31
+    SER_TX      = 30
+    SER_BAUD    = 115_200
+
+    I2C_SCL     = 28
+    I2C_SDA     = 29
+    I2C_HZ      = 400_000                                               ' I2C clock used only with PASM driver
+    SHDN_PIN    = 18
 
 OBJ
 
@@ -27,7 +32,8 @@ OBJ
     ser     : "com.serial.terminal.ansi"
     io      : "io"
     time    : "time"
-    amp     : "signal.audio.amp.max9744.i2c"
+    amp     : "signal.audio.amp.max9744.i2c"                            ' PASM driver
+'    amp     : "tiny.signal.audio.amp.max9744.i2c"                      ' SPIN-only driver
 
 PUB Main | i, level
 
@@ -52,6 +58,9 @@ PUB Main | i, level
                 "f":
                     ser.Str (string("Modulation mode: Filterless ", ser#CR, ser#LF))
                     amp.ModulationMode (0)
+                "m":
+                    ser.Str (string("MUTE", ser#CR, ser#LF))
+                    amp.Mute
                 "p":
                     ser.Str (string("Modulation mode: Classic PWM", ser#CR, ser#LF))
                     amp.ModulationMode (1)
@@ -63,7 +72,8 @@ PUB Setup
     time.MSleep(30)
     ser.Clear
     ser.Str (string("Serial terminal started", ser#CR, ser#LF))
-    if amp.Startx (I2C_SCL, I2C_SDA, I2C_HZ, SHDN_PIN)
+    if amp.Startx (I2C_SCL, I2C_SDA, I2C_HZ, SHDN_PIN)                  ' PASM driver
+'    if amp.Startx (I2C_SCL, I2C_SDA, SHDN_PIN)                         ' SPIN-only driver
         ser.Str (string("MAX9744 driver started", ser#CR, ser#LF))
     else
         ser.Str (string("MAX9744 driver failed to start - halting", ser#CR, ser#LF))

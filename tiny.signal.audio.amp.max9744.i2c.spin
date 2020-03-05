@@ -1,10 +1,10 @@
 {
     --------------------------------------------
-    Filename: signal.audio.amp.max9744.i2c.spin
+    Filename: tiny. signal.audio.amp.max9744.i2c.spin
     Author: Jesse Burt
-    Description: Driver for the MAX9744 20W audio amplifier IC
+    Description: Driver for the MAX9744 20W audio amplifier IC (SPIN-only version)
     Copyright (c) 2020
-    Started Jul 7, 2018
+    Started Mar 5, 2020
     Updated Mar 5, 2020
     See end of file for terms of use.
     --------------------------------------------
@@ -17,8 +17,6 @@ CON
 
     DEF_SCL           = 28
     DEF_SDA           = 29
-    DEF_HZ            = 400_000
-    I2C_MAX_FREQ      = core#I2C_MAX_FREQ
 
 VAR
 
@@ -27,7 +25,7 @@ VAR
 
 OBJ
 
-    i2c     : "com.i2c"
+    i2c     : "tiny.com.i2c"
     core    : "core.con.max9744"
     io      : "io"
     time    : "time"
@@ -39,21 +37,20 @@ PUB Start(SHDN_PIN): okay                                       'Default to "sta
 ' Simple start method uses default pin and bus freq settings, but still requires
 '  SHDN_PIN to be defined
     if lookdown(SHDN_PIN: 0..31)
-        okay := Startx (DEF_SCL, DEF_SDA, DEF_HZ, SHDN_PIN)
+        okay := Startx (DEF_SCL, DEF_SDA, SHDN_PIN)
     else
         return FALSE
 
-PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ, SHDN_PIN): okay
+PUB Startx(SCL_PIN, SDA_PIN, SHDN_PIN): okay
 ' Start with custom settings
-'   Returns: Core/cog number+1 of I2C driver, FALSE if no cogs available
+'   Returns: Core/cog number+1 of driver
     if lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31)
-        if I2C_HZ =< core#I2C_MAX_FREQ
-            if okay := i2c.setupx (SCL_PIN, SDA_PIN, I2C_HZ)    'I2C Object Started?
-                time.MSleep (1)
-                if i2c.present (SLAVE_WR)                       'Response from device?
-                    _shdn := SHDN_PIN
-                    Powered(TRUE)                               'Bring SHDN pin high, if it isn't already
-                    return okay
+        i2c.setupx (SCL_PIN, SDA_PIN)                           'I2C Object Started?
+        time.MSleep (1)
+        if i2c.present (SLAVE_WR)                               'Response from device?
+            _shdn := SHDN_PIN
+            Powered(TRUE)                                       'Bring SHDN pin high, if it isn't already
+            return okay := cogid + 1
 
     return FALSE                                                'If we got here, something went wrong
 
@@ -61,7 +58,6 @@ PUB Stop
 
     Mute
     Powered(FALSE)
-    i2c.terminate
 
 PUB ModulationMode(mode)
 ' Set output filter mode
@@ -121,14 +117,12 @@ PUB VolUp
 ' Increase volume level
     writeReg(core#CMD_VOL_UP)
 
-PRI writeReg(reg) | cmd_packet
+PRI writeReg(reg)
 
-    cmd_packet.byte[0] := SLAVE_WR
-    cmd_packet.byte[1] := reg
-
-    i2c.start
-    i2c.wr_block (@cmd_packet, 2)
-    i2c.stop
+    i2c.Start
+    i2c.Write (SLAVE_WR)
+    i2c.Write (reg)
+    i2c.Stop
 
 DAT
 {
