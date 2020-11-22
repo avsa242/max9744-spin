@@ -21,5 +21,7 @@ CON
     MOD_FILTERLESS          = %01_000000
     MOD_CLASSICPWM          = %01_000001
 
+#ifndef __propeller2__
 PUB Null
-'' This is not a top-level object
+' This is not a top-level object
+#endif

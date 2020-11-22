@@ -25,7 +25,7 @@ P2/SPIN2:
 ## Compiler Compatibility
 
 * P1/SPIN1: OpenSpin (tested with 1.00.81)
-* P2/SPIN2: FastSpin (tested with 4.1.10-beta)
+* P2/SPIN2: FastSpin (tested with 5.0.0)
 * ~~BST~~ (incompatible - no preprocessor)
 * ~~Propeller Tool~~ (incompatible - no preprocessor)
 * ~~PNut~~ (incompatible - no preprocessor)
@@ -37,4 +37,4 @@ P2/SPIN2:
 ## TODO
 
 - [x] Create variant that uses a SPIN-based I2C driver, so as to be more compact, and not require an additional core, since the driver is so simple and resource-light anyway.
-- [ ] Port to P2/SPIN2
+- [x] Port to P2/SPIN2
