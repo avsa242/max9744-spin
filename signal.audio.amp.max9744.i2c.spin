@@ -5,20 +5,24 @@
     Description: Driver for the MAX9744 20W audio amplifier IC
     Copyright (c) 2020
     Started Jul 7, 2018
-    Updated Mar 5, 2020
+    Updated Nov 22, 2020
     See end of file for terms of use.
     --------------------------------------------
 }
 
 CON
 
-    SLAVE_WR          = core#SLAVE_ADDR
-    SLAVE_RD          = core#SLAVE_ADDR|1
+    SLAVE_WR            = core#SLAVE_ADDR
+    SLAVE_RD            = core#SLAVE_ADDR|1
 
-    DEF_SCL           = 28
-    DEF_SDA           = 29
-    DEF_HZ            = 400_000
-    I2C_MAX_FREQ      = core#I2C_MAX_FREQ
+    DEF_SCL             = 28
+    DEF_SDA             = 29
+    DEF_HZ              = 100_000
+    I2C_MAX_FREQ        = core#I2C_MAX_FREQ
+
+' Filter setting
+    NONE                = 0
+    PWM                 = 1
 
 VAR
 
@@ -32,14 +36,14 @@ OBJ
     io      : "io"
     time    : "time"
 
-PUB Null
+PUB Null{}
 ' This is not a top-level object
 
-PUB Start(SHDN_PIN): okay                                       'Default to "standard" Propeller I2C pins and 400kHz
-' Simple start method uses default pin and bus freq settings, but still requires
-'  SHDN_PIN to be defined
+PUB Start(SHDN_PIN): okay
+' Start using "standard" Propeller I2C pins and 100kHz
+'   Still requires SHDN_PIN
     if lookdown(SHDN_PIN: 0..31)
-        okay := Startx (DEF_SCL, DEF_SDA, DEF_HZ, SHDN_PIN)
+        okay := startx(DEF_SCL, DEF_SDA, DEF_HZ, SHDN_PIN)
     else
         return FALSE
 
@@ -48,43 +52,43 @@ PUB Startx(SCL_PIN, SDA_PIN, I2C_HZ, SHDN_PIN): okay
 '   Returns: Core/cog number+1 of I2C driver, FALSE if no cogs available
     if lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31)
         if I2C_HZ =< core#I2C_MAX_FREQ
-            if okay := i2c.setupx (SCL_PIN, SDA_PIN, I2C_HZ)    'I2C Object Started?
-                time.MSleep (1)
-                if i2c.present (SLAVE_WR)                       'Response from device?
+            if okay := i2c.setupx(SCL_PIN, SDA_PIN, I2C_HZ)
+                time.msleep(1)
+                if i2c.present (SLAVE_WR)       ' check device bus presence
                     _shdn := SHDN_PIN
-                    Powered(TRUE)                               'Bring SHDN pin high, if it isn't already
+                    powered(TRUE)               ' SHDN pin high
                     return okay
 
-    return FALSE                                                'If we got here, something went wrong
+    return FALSE                                ' something above failed
 
-PUB Stop
+PUB Stop{}
 
-    Mute
-    Powered(FALSE)
-    i2c.terminate
+    mute{}
+    powered(FALSE)
+    i2c.terminate{}
 
 PUB ModulationMode(mode)
 ' Set output filter mode
 '   Valid values:
-'       0: Filterless
-'       1: Classic PWM
+'       NONE (0): Filterless
+'       PWM (1): Classic PWM
 '   Any other value returns the current setting
     case mode
-        0:
-            _mod_mode := core#MODULATION_FILTERLESS  'Filterless modulation
-        1:
-            _mod_mode := core#MODULATION_CLASSICPWM  'Classic PWM
+        0:                                      ' filterless modulation
+            _mod_mode := core#MOD_FILTERLESS
+        1:                                      ' classic PWM
+            _mod_mode := core#MOD_CLASSICPWM
         OTHER:
             return _mod_mode
 
-    Powered (FALSE)
-    Powered (TRUE)
+    powered(FALSE)                              ' cycle power
+    powered(TRUE)                               '   to effect changes
   
-    writeReg(_mod_mode)
+    writereg(_mod_mode)
 
-PUB Mute
+PUB Mute{}
 ' Set 0 Volume
-    Volume (0)
+    volume(0)
 
 PUB Powered(enabled)
 ' Power on or off
@@ -92,18 +96,18 @@ PUB Powered(enabled)
 '       FALSE (0): Power off
 '       TRUE (-1 or 1): Power on
 '   Any other value returns the current setting
-    case ||enabled
+    case ||(enabled)
         0:
-            io.Low (_shdn)
+            io.low(_shdn)
         1:
-            io.High (_shdn)
-            Volume(_vol_level)
+            io.high(_shdn)
+            volume(_vol_level)
         OTHER:
-            return io.State (_shdn)
+            return io.state(_shdn)
 
-PUB VolDown
+PUB VolDown{}
 ' Decrease volume level
-    writeReg(core#CMD_VOL_DN)
+    writereg(core#CMD_VOL_DN)
 
 PUB Volume(level)
 ' Set Volume to a specific level
@@ -115,20 +119,20 @@ PUB Volume(level)
         OTHER:
             return _vol_level
 
-    writeReg(_vol_level)
+    writereg(_vol_level)
 
-PUB VolUp
+PUB VolUp{}
 ' Increase volume level
-    writeReg(core#CMD_VOL_UP)
+    writereg(core#CMD_VOL_UP)
 
-PRI writeReg(reg) | cmd_packet
+PRI writeReg(reg) | cmd_pkt
+' Write register/command to device
+    cmd_pkt.byte[0] := SLAVE_WR
+    cmd_pkt.byte[1] := reg
 
-    cmd_packet.byte[0] := SLAVE_WR
-    cmd_packet.byte[1] := reg
-
-    i2c.start
-    i2c.wr_block (@cmd_packet, 2)
-    i2c.stop
+    i2c.start{}
+    i2c.wr_block(@cmd_pkt, 2)
+    i2c.stop{}
 
 DAT
 {
