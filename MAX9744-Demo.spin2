@@ -30,7 +30,7 @@ OBJ
 
     cfg     : "core.con.boardcfg.p2eval"
     ser     : "com.serial.terminal.ansi"
-    amp     : "audio.amp.max9744.i2c"
+    amp     : "audio.amp.max9744"
 
 PUB Main() | i, level
 
