@@ -1,31 +1,25 @@
 {
-    --------------------------------------------
-    Filename: audio.amp.max9744.spin
-    Author: Jesse Burt
-    Description: Driver for the MAX9744 20W audio amplifier IC
-    Copyright (c) 2023
-    Started Jul 7, 2018
-    Updated Jun 16, 2023
-    See end of file for terms of use.
-    --------------------------------------------
+----------------------------------------------------------------------------------------------------
+    Filename:       audio.amp.max9744.spin
+    Description:    Driver for the MAX9744 20W audio amplifier IC
+    Author:         Jesse Burt
+    Started:        Jul 7, 2018
+    Updated:        Aug 24, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
 
 CON
 
     { default I/O configuration - these can be overridden by the parent object }
-    SCL             = DEF_SCL
-    SDA             = DEF_SDA
-    I2C_FREQ        = DEF_HZ
-    I2C_ADDR        = DEF_ADDR
-    SHDN            = 24
+    SCL             = 28
+    SDA             = 29
+    I2C_FREQ        = 100_000
+    I2C_ADDR        = 0
+    SHDN            = 24                        ' shutdown
 
 
-    DEF_SCL         = 28
-    DEF_SDA         = 29
-    DEF_HZ          = 100_000
-    DEF_ADDR        = 0
     I2C_MAX_FREQ    = core.I2C_MAX_FREQ
-
 
     SLAVE_WR        = core.SLAVE_ADDR
     SLAVE_RD        = core.SLAVE_ADDR|1
@@ -60,7 +54,13 @@ PUB start(): status
 
 PUB startx(SCL_PIN, SDA_PIN, I2C_HZ, SHDN_PIN): status
 ' Start using custom I/O settings
-'   Returns: Core/cog number+1 of I2C engine, FALSE if no cogs available
+'   SCL_PIN:    I2C clock, 0..31
+'   SDA_PIN:    I2C data, 0..31
+'   I2C_HZ:     I2C clock speed (max official specification is 400_000 but is unenforced)
+'   SHDN_PIN:   display reset, 0..31 (optional; use -1 to disable)
+'   Returns:
+'       cog ID+1 of I2C engine on sucess (= calling cog ID+1, if the bytecode I2C engine is used)
+'       0 on failure
     if ( lookdown(SCL_PIN: 0..31) and lookdown(SDA_PIN: 0..31) )
         if ( status := i2c.init(SCL_PIN, SDA_PIN, I2C_HZ) )
             time.msleep(1)
@@ -79,6 +79,7 @@ PUB stop()
     mute()
     powered(FALSE)
     i2c.deinit()
+    _shdn := _vol_level := _mod_mode := 0       ' clear used variables
 
 
 PUB modulation_mode(): curr_mode
@@ -134,14 +135,14 @@ PUB set_modulation(mode)
 PUB set_volume(level)
 ' Set Volume to a specific level
 '   Valid values: 0..63
-    _vol_level := 0 #> level <# 63
+    _vol_level := 0 #> level <# 63              ' clamp value to range and cache in RAM
     writereg(_vol_level)
 
 
 PUB vol_down()
 ' Decrease volume level
     writereg(core.CMD_VOL_DN)
-    _vol_level := 0 #> (_vol_level - 1)
+    _vol_level := 0 #> (_vol_level - 1)         ' clamp to a minimum of 0
 
 
 PUB vol_up()
@@ -151,7 +152,7 @@ PUB vol_up()
 
 
 PUB volume(): curr_lvl
-' Get current volume level (cached)
+' Get current volume level (value cached in RAM)
     return _vol_level
 
 
@@ -167,7 +168,7 @@ PRI writereg(reg_nr) | cmd_pkt
 
 DAT
 {
-Copyright 2023 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

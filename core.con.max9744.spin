@@ -1,13 +1,12 @@
 {
-    --------------------------------------------
-    Filename: core.con.max9744.spin
-    Author: Jesse Burt
-    Description: MAX9744-specific constants
-    Copyright (c) 2021
-    Started Jul 7, 2018
-    Updated May 1, 2021
-    See end of file for terms of use.
-    --------------------------------------------
+----------------------------------------------------------------------------------------------------
+    Filename:       core.con.max9744.spin
+    Description:    MAX9744-specific constants
+    Author:         Jesse Burt
+    Started:        Jul 7, 2018
+    Updated:        Aug 24, 2024
+    Copyright (c) 2024 - See end of file for terms of use.
+----------------------------------------------------------------------------------------------------
 }
 
 CON
@@ -21,12 +20,14 @@ CON
     MOD_FILTERLESS          = %01_000000
     MOD_CLASSICPWM          = %01_000001
 
-PUB null{}
+
+PUB null()
 ' This is not a top-level object
+
 
 DAT
 {
-Copyright 2022 Jesse Burt
+Copyright 2024 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,

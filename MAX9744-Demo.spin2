@@ -3,8 +3,8 @@
     Filename:       MAX9744-Demo.spin2
     Description:    Simple serial terminal-based demo of the MAX9744 audio amp driver.
     Author:         Jesse Burt
-    Started:        Jul 7, 2018
-    Updated:        Jan 21, 2024
+    Started:        Nov 22, 2020
+    Updated:        Aug 24, 2024
     Copyright (c) 2024 - See end of file for terms of use.
 ---------------------------------------------------------------------------------------------------
 }
@@ -19,7 +19,7 @@ OBJ
 
     cfg:    "boardcfg.p2eval"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=2_000_000
-    amp:    "audio.amp.max9744" | SCL=28, SDA=29, I2C_FREQ=400_000, SHDN=24
+    amp:    "audio.amp.max9744" | SCL=0, SDA=1, I2C_FREQ=400_000, SHDN=2
 
 
 PUB main() | i, level
@@ -39,7 +39,7 @@ PUB main() | i, level
         ser.strln(@"p: Classic PWM modulation")
         ser.newline()
         ser.newline()
-        ser.printf(@"Volume: %d \n", level)
+        ser.printf(@"Volume: %d \n\r", level)
 
         i := ser.getchar()
             case i
@@ -64,8 +64,10 @@ PUB main() | i, level
 PUB setup()
 
     ser.start()
+
     ser.clear()
     ser.strln(@"Serial terminal started")
+
     if ( amp.start() )
         ser.strln(@"MAX9744 driver started")
     else

@@ -4,15 +4,18 @@
     Description:    Simple serial terminal-based demo of the MAX9744 audio amp driver.
     Author:         Jesse Burt
     Started:        Jul 7, 2018
-    Updated:        Jan 21, 2024
+    Updated:        Aug 24, 2024
     Copyright (c) 2024 - See end of file for terms of use.
 ---------------------------------------------------------------------------------------------------
 }
+' Uncomment the two lines below to use the bytecode-based I2C engine
+'#define MAX9744_I2C_BC
+'#pragma exportdef(MAX9744_I2C_BC)
 
 CON
 
-    _clkmode    = cfg#_clkmode
-    _xinfreq    = cfg#_xinfreq
+    _clkmode    = cfg._clkmode
+    _xinfreq    = cfg._xinfreq
 
 
 OBJ
@@ -40,7 +43,7 @@ PUB main() | i, level
         ser.strln(@"p: Classic PWM modulation")
         ser.newline()
         ser.newline()
-        ser.printf1(@"Volume: %d \n", level)
+        ser.printf1(@"Volume: %d \n\r", level)
 
         i := ser.getchar()
             case i
@@ -52,14 +55,14 @@ PUB main() | i, level
                     amp.vol_up()
                 "f":
                     ser.strln(@"Modulation mode: Filterless ")
-                    amp.set_modulation(amp#NONE)
+                    amp.set_modulation(amp.NONE)
                     amp.set_volume(level)
                 "m":
                     amp.mute()
                     level := 0
                 "p":
                     ser.strln(@"Modulation mode: Classic PWM")
-                    amp.set_modulation(amp#PWM)
+                    amp.set_modulation(amp.PWM)
                     amp.set_volume(level)
 
 PUB setup()
@@ -68,8 +71,9 @@ PUB setup()
     time.msleep(30)
     ser.clear()
     ser.strln(@"Serial terminal started")
+
     if ( amp.start() )
-        ser.strln(@"MAX9744 driver started (I2C)")
+        ser.strln(@"MAX9744 driver started")
     else
         ser.strln(@"MAX9744 driver failed to start - halting")
         repeat
