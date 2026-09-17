@@ -41,29 +41,28 @@ PUB {++opt(0)}main() | i, level
         ser.strln(@"f: Filterless modulation")
         ser.strln(@"m: Mute")
         ser.strln(@"p: Classic PWM modulation")
-        ser.newline()
-        ser.newline()
-        ser.printf1(@"Volume: %d \n\r", level)
+        ser.printf(@"\n\r\n\rVolume: %d \n\r", level)
 
         i := ser.getchar()
-            case i
-                "[":
-                    level := 0 #> (level - 1)
-                    amp.vol_down()
-                "]":
-                    level := (level + 1) <# 63
-                    amp.vol_up()
-                "f":
-                    ser.strln(@"Modulation mode: Filterless ")
-                    amp.set_modulation(amp.NONE)
-                    amp.set_volume(level)
-                "m":
-                    amp.mute()
-                    level := 0
-                "p":
-                    ser.strln(@"Modulation mode: Classic PWM")
-                    amp.set_modulation(amp.PWM)
-                    amp.set_volume(level)
+        case i
+            "[":
+                level := 0 #> (level - 1)
+                amp.vol_down()
+            "]":
+                level := (level + 1) <# 63
+                amp.vol_up()
+            "f":
+                ser.strln(@"Modulation mode: Filterless ")
+                amp.set_modulation(amp.NONE)
+                amp.set_volume(level)
+            "m":
+                amp.mute()
+                level := 0
+            "p":
+                ser.strln(@"Modulation mode: Classic PWM")
+                amp.set_modulation(amp.PWM)
+                amp.set_volume(level)
+
 
 PUB setup()
 
