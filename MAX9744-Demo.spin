@@ -14,13 +14,12 @@
 
 CON
 
-    _clkmode    = cfg._clkmode
-    _xinfreq    = cfg._xinfreq
+    _clkmode    = xtal1+pll16x
+    _xinfreq    = 5_000_000
 
 
 OBJ
 
-    cfg:    "boardcfg.flip"
     ser:    "com.serial.terminal.ansi" | SER_BAUD=115_200
     amp:    "audio.amp.max9744" | SCL=28, SDA=29, I2C_FREQ=400_000, SHDN=24
     time:   "time"
