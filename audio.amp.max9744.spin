@@ -4,8 +4,8 @@
     Description:    Driver for the MAX9744 20W audio amplifier IC
     Author:         Jesse Burt
     Started:        Jul 7, 2018
-    Updated:        Aug 24, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Sep 17, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ----------------------------------------------------------------------------------------------------
 }
 
@@ -105,7 +105,7 @@ PUB powered(state)
     if ( state )
         outa[_shdn] := 1
         dira[_shdn] := 1
-        set_volume(_vol_level)
+        set_volume()
     else
         outa[_shdn] := 0
         dira[_shdn] := 1
@@ -132,9 +132,11 @@ PUB set_modulation(mode)
     writereg(_mod_mode)
 
 
-PUB set_volume(level)
+PUB set_volume(level=-1)
 ' Set Volume to a specific level
 '   Valid values: 0..63
+    if ( level == -1 )
+        level := _vol_level
     _vol_level := 0 #> level <# 63              ' clamp value to range and cache in RAM
     writereg(_vol_level)
 
@@ -168,7 +170,7 @@ PRI writereg(reg_nr) | cmd_pkt
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
