@@ -4,8 +4,8 @@
     Description:    Simple serial terminal-based demo of the MAX9744 audio amp driver.
     Author:         Jesse Burt
     Started:        Jul 7, 2018
-    Updated:        Aug 24, 2024
-    Copyright (c) 2024 - See end of file for terms of use.
+    Updated:        Sep 17, 2026
+    Copyright (c) 2026 - See end of file for terms of use.
 ---------------------------------------------------------------------------------------------------
 }
 ' Uncomment the two lines below to use the bytecode-based I2C engine
@@ -26,7 +26,7 @@ OBJ
     time:   "time"
 
 
-PUB main() | i, level
+PUB {++opt(0)}main() | i, level
 
     setup()
     level := 31
@@ -81,7 +81,7 @@ PUB setup()
 
 DAT
 {
-Copyright 2024 Jesse Burt
+Copyright 2026 Jesse Burt
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
 associated documentation files (the "Software"), to deal in the Software without restriction,
